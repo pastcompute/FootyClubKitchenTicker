@@ -1,0 +1,149 @@
+Raspberry Pi implementation.
+
+1. Photo Memorabilia / Thank Sponsors / Advertising
+
+Prototyped already using screenly.
+LCD TV will display seqntially or randomly a series of photos, advertising pages, and thank the sponsor messages.
+
+2. Kitchen Menu
+
+Our awesome cook wants to show the menu on Thursday/Saturday teas :-)
+
+We could have this as a mode, where the menu shows repeatedly, in between 1-N sets of photos, etc.
+
+This leads me to think we could actually have multiple sets of #1 above saved, to choose between, as well.
+
+3. Immediate Upload Mode
+
+Allow committee to uload photos during already play with rules on when to display
+
+
+4. Announcement Mode
+
+We could allow committee to type in a message to be displayed.
+Have rules on when to show on and how long, etc.
+Perhaps this could be on the (a) ticker instead.
+e.g. game day half time scores, other informaiton.
+
+4a. Full Scren Announce mode
+4b. Ticker announce mode
+
+5. Kicthen tea announcements - allow order taker to flash up names, then remove them when they take their dinner
+This will complement existing microphone use...
+
+6. Shut Up announcements
+
+When the Pres has the floor, we can have a static 'Please Shut up'
+Could have a remote button to press which will flash it :-)
+
+7. Slave Mode
+
+Dont want to have to upload to systems.
+So one is master (the one in the close-offable area)
+The one in the bar is a slave.
+
+Design notes: master will have router, slave just a wifi dongle
+Master will run webserver which slave will access for content
+Master will have management webserver for uploading
+Slave will need a way to respond to mode changes
+Consider independent (dual) mode configurationableness...
+
+
+10. Guidance
+
+The User Interface for uploading after mode selection needs to be DEAD SIMPLE!!!!!
+
+Will work initially on direct cable, using DHCP. So need User Guide on how to config W7
+for sharing so laptop can be DHCP server.
+
+Final design will be cable tied to a micro-wireless router so we can just remotely do it.
+System will be behind TV making routine physical access dificult
+
+
+
+
+20. Design Concept
+
+First System.
+------------
+
+Raspberry Pi running Wheezbian
+HDMI cable
+240 double adaptor with USB power socket, USB cable, for Pi Power
+SD Card
+Router (e.g. DIR-505) running OpenWRT, connected to Pi with short CatV ethernet
+Router runs DHCP and some security stuff, we dont want randoms realising there is a wifi point they can connect with their Androids...
+Heatsink - easier to leave always on, unless we also get a GPO timer
+
+SD Card just has O/S and software (and data), too hard to allow people to keep taking it in/out
+Instead we upload to the Pi using management web server
+Also have a normal webserver possibly with a browsing URI for testing / checking
+Normal webserver also provides URIs for messages (Sponsor thanking, etc)
+Status webpage(s) passworded
+Entry webpage with funny message...
+
+Implement using screenly.
+Augment with a ticker, because screenly just shows photos videos and URLs
+Ticker may be a screenly mode, but perhaps easier to use spearately
+Need to mod screenly to show a space for the ticker
+
+Second System.
+------------
+
+Raspberry Pi running Wheezbian
+HDMI cable
+240 double adaptor with USB power socket, USB cable, for Pi Power
+SD Card
+Heatsink - easier to leave always on, unless we also get a GPO timer
+Wifi dongle
+
+Screenly and ticker as normal.
+Ticker should get info from a HTTP 
+So can configure both to access content from other system
+Perhaps have a CRON job or something though, because photos are loaded on locally.
+Some work needed here.
+
+
+Experimental Options
+--------------------
+
+USB Bluetooth dongle
+Bluetooth Keyboard -- allow a _limited_ management mode sans laptop (mode changes)
+
+
+
+
+Future Options
+--------------
+Spend $100 and put a 12mo prepaid dongle for remote management and status
+
+
+Initial Shopping List
+---------------------
+
+2x Raspberry Pi B 512M - do we get a spare?
+2x heatsink
+2x micro USB power cable
+2x double adaptor+2xUSB-power sufficient to power the Pi - like the Jackson ones at KMart
+3x 8G SDcard  (1 spare)
+2x micro bt dongle
+1x bt keyboard $22 @ woolies (do we need a spare?)
+1x USB hub (with micro usb power option) + cable for testing and STW
+2x 0.5m ethernet cable (1 spare)
+1x 5m ethernet cable for STW purposes
+3x 0.5m HDMI cable (1 spare)
+1x 5m HDMI cable for STW purposes
+2x compatible Wifi dongle (1 spare)
+1x DIR505
+
+Primary Software Packages:
+
+Wheezbian - look at mirroring a chunk so dont need to rely on internet
+OpenWRT custom image for DIR-505
+Screenly
+
+
+
+
+
+
