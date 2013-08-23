@@ -1,0 +1,77 @@
+Whilst attempting to get it to work on Debian x86_64 I tweaked up the xloader shell script to be a bit more robust.
+
+I needed to also do:
+
+# needed for screenly:
+
+apt-get install python-requests python-netifaces uzbl socat feh
+# apt-get remove python-bottle python-mako
+
+# needed to get pythin package 'sh' for screenly
+# virtualenv also isolates different python working environments
+
+apt-get install python-pip python-virtualenv
+
+cd directory/above/screenly
+mkdir mypy
+virtualenv mypy
+pip install -E mypy sh
+pip install -E mypy hurry.filesize
+pip install -E mypy uptime
+pip install -E mypy bottle-haml
+pip install -E mypy --upgrade bottle
+pip install -E mypy --upgrade mako
+
+# then to continue testing
+source mypy/bin/activate
+cd screenly-ose
+
+mkdir ~/.screenly
+cp misc/screenly.conf ~/.screenly
+sed -e "s@debug_logging = False@debug_logging = True@" -i ~/.screenly/screenly.conf
+  
+STARTUP_DELAY=1 misc/xloader.sh
+
+Further, need to setup a web server to serve the splach screen, etc.
+This will get served locally by running server.py in another terminal.
+
+
+The splash page is at http://<listen>:<port>/splash_page where
+listen:port is the value of the setting 'listen' in screenly.conf
+By default this gets set to 0.0.0.0:8080
+
+localhost:8080/splash_page will try and display splash screen from views/splash_page.haml
+
+The debian squeeze installation of python-bottle 0.8.4-1 has a bug, the member variable holding
+a valid list of filename extensions is spelled "extentions" but the version of bottle-haml installed from pip
+uses 'extensions', so I had to manually patch __init__.py in my python vierualenv to workaround this.
+
+Then the index page wouldnt parse properly.
+So I did `apt-get remove python-bottle` and instead install newer version using pip
+This fixed the typo as well *doh* so revert that change. 
+So I could have skipped the apt-get remove and used upgrade in the venv
+
+Except the newest bottle didnt help; and now the stack trace is on server.py stderr instead of the Web UI.
+Upgrading mako did the trick. Didnt need to add views/ to lookup argument after all.
+
+URLS:
+localhost:8080/splash_page
+
+localhost:8080/system_info
+
+localhost:8080/settings
+
+localhost:8080/  aka index
+
+By default images get saved into $HOME/screenly_assets
+
+Not showing.  Turned off splash. 
+
+Problems with socat: socat[3207] E connect(3, AF=1 "/tmp/uzbl_socket_3179", 23): No such file or directory
+--> the socket to control uzbl is named differently so I added a fallback for that
+
+By lucky fluke, this is firing up on my secondary monitor, awesome!
+
+Note - to enable stack traces in the web server, 
+from bottle import debug
+then debug(True) just before run(....)

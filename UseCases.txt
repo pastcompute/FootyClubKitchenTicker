@@ -141,7 +141,9 @@ Primary Software Packages:
 Wheezbian - look at mirroring a chunk so dont need to rely on internet
 OpenWRT custom image for DIR-505
 Screenly
-
+uzbl   <-- this is a webkit based browser
+socat  <-- used for comms with uzbl
+feh    <-- image viewer
 
 
 
