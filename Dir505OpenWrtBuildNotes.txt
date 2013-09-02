@@ -9,7 +9,7 @@ DIR-505 is apparently supported in Attitude Adjustment: http://wiki.openwrt.org/
 
 We need to build from git trunk sources.  I also like to make my OpenWRT image highly specific as possible, but to start with make it close to the standard OpenWRT to sanity check.
 
-    mkdir -p $HOME/develop/club/openwrt/DOWNLOAD
+    mkdir -p $HOME/develop/$PROJECT/openwrt/DOWNLOAD
     git clone git://git.openwrt.org/openwrt.git 
     cd openwrt
 
@@ -19,7 +19,7 @@ We need to build from git trunk sources.  I also like to make my OpenWRT image h
     CONFIG_TARGET_ar71xx_generic=y
     CONFIG_TARGET_ar71xx_generic_DIR505A1=y
     CONFIG_DEVEL=y
-    CONFIG_DOWNLOAD_FOLDER="$HOME/develop/club/DOWNLOAD.openwrt"
+    CONFIG_DOWNLOAD_FOLDER="$HOME/develop/$PROJECT/DOWNLOAD.openwrt"
     CONFIG_BUILD_LOG=y
     CONFIG_NEED_TOOLCHAIN=y
     EOF
@@ -70,12 +70,57 @@ Rebuild with more packages; to expedite setup, I added web interface, and WPA, a
 
     scripts/feeds install luci-mod-admin-mini luci
     make menuconfig  
-    # <-- select luci, wpa-supplicant wireless-tools wpa-cli usbutils - as built in not module, to facilitiate new builds.
+    # <-- select luci, wpad-mini usbutils - as built in not module, to facilitiate new builds.
     # <-- select tcpdump as module (diagnostic tools)
     # <-- select Video support, phillips USB webcam, gscpa-core and all the gspca usb webcams as modules
     # <-- remove ppp
     # <-- global build, disable ipv6, remove net: 6relay, odhcp6c, netfilter-ip6 etc until no ip6 related are selected
     make -j4
+
+Local package repository
+------------------------
+
+I make a symlink from my `~/public_html` to my develop/$PROJECT/openwrt/ directory
+
+Then edit /etc/opkg.conf (replace $USER with your home directory):
+
+    src/gz barrier_breaker http://192.168.1.2/~$USER/openwrt/bin/ar71xx/packages
+
+Then:
+
+    opkg update
+    opkg install luci tcpdump
+    /etc/init.d/uhttpd enable
+    /etc/init.d/uhttpd start
+
+Enable the wifi:
+
+    uci set wireless.radio0=wifi-device
+    uci set wireless.radio0.channel=6
+    uci set wireless.radio0.country=AU
+    uci set wireless.radio0.hwmode=11g
+    uci set wireless.@wifi-device[0]=wifi-device
+    uci set wireless.@wifi-device[0].disabled=0
+    uci set wireless.@wifi-device[0].network=lan 
+    uci set wireless.@wifi-device[0].mode=ap
+    uci set wireless.@wifi-device[0].ssid=longies
+    uci set wireless.@wifi-device[0].encryption=psk2
+    uci set "wireless.@wifi-device[0].key=T!gersRulez"
+    uci commit wireless; wifi
+    
+From the web interface:
+
+* Network - first, remove wlan0 from the bridge, so other changes can be made to wireless settings
+* Wireless - change radio0 to AP, enable radio0; it appears you need to switch to Ad-Hoc then AP, otherwise it stays stuck in Client (maybe a luci bug)
+
+Other Notes
+===========
+
+Wireless encryption
+-------------------
+
+uci seems to want hostapd despite having installed wpa_supplicant ...
+
 
 Upgrade - full reflash:
 -----------------------
@@ -89,7 +134,7 @@ Then telnet into device.
 
 Here, 192.168.1.2 is the development machine connected to the router.
 
-sysupgrade -n http://192.168.1.2/~$USER/club/openwrt/bin/ar71xx/openwrt-ar71xx-generic-dir-505-a1-squashfs-sysupgrade.bin
+sysupgrade -n http://192.168.1.2/~$USER/$PROJECT/openwrt/bin/ar71xx/openwrt-ar71xx-generic-dir-505-a1-squashfs-sysupgrade.bin
 
 Note, sysupgrade direct pulls from web to flash.
 If you have issues with power supply, may be safer to copy to /tmp and flash from there.
