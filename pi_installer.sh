@@ -64,7 +64,7 @@ if [ "$1" == "system-install" ] ; then
         python-imaging python-dev uzbl sqlite3 supervisor omxplayer \
         x11-xserver-utils libx11-dev watchdog chkconfig feh vim di htop xterm \
         xfonts-base xfonts-100dpi xfonts-75dpi xfonts-terminus x11-apps \
-        ticker wmctrl
+        ticker wmctrl fonts-inconsolatahttps://wiki.archlinux.org/index.php/Xterm
         # xfonts-traditional 
   sudo pip install -r "$SCREENLY_DIR/requirements.txt" 
 
@@ -113,15 +113,18 @@ rsync -v "$SCREENLY_DIR/misc/lxde-rc.xml" ~/.config/openbox/lxde-rc.xml
 
 # Should be done in git now. chmod +x "$SCREENLY_DIR/server.py"
 
-# Now, the ticker...
+# Now, the ticker... 
 # http://forum.porteus.org/viewtopic.php?f=53&t=1013
 #xterm*faceName:           terminus:bold:pixelsize=14
-
+# https://wiki.archlinux.org/index.php/Xterm
 cat > ~/.Xdefaults <<EOF
-xterm*dynamicColors:      true
+XTerm*dynamicColors:      true
 EOF
 fc-cache
 xrdb -merge ~/.Xdefaults
 
-rsync -v ticker/splash_page_extra "$SCREENLY_DIR/views"
+rsync -v ticker/splash_page_extra.haml "$SCREENLY_DIR/views"
+rsync -v ticker/logo.jpg "$SCREENLY_DIR/static/img"
 
+
+echo 'WARNING - fix .config/openbox/lxde-rc.xml such that application/maximized is no!'
