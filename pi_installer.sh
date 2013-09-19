@@ -64,7 +64,7 @@ if [ "$1" == "system-install" ] ; then
         python-imaging python-dev uzbl sqlite3 supervisor omxplayer \
         x11-xserver-utils libx11-dev watchdog chkconfig feh vim di htop xterm \
         xfonts-base xfonts-100dpi xfonts-75dpi xfonts-terminus x11-apps \
-        ticker
+        ticker wmctrl
         # xfonts-traditional 
   sudo pip install -r "$SCREENLY_DIR/requirements.txt" 
 
@@ -115,11 +115,13 @@ rsync -v "$SCREENLY_DIR/misc/lxde-rc.xml" ~/.config/openbox/lxde-rc.xml
 
 # Now, the ticker...
 # http://forum.porteus.org/viewtopic.php?f=53&t=1013
+#xterm*faceName:           terminus:bold:pixelsize=14
+
 cat > ~/.Xdefaults <<EOF
-xterm*faceName:           terminus:bold:pixelsize=14
 xterm*dynamicColors:      true
 EOF
 fc-cache
 xrdb -merge ~/.Xdefaults
 
+rsync -v ticker/splash_page_extra "$SCREENLY_DIR/views"
 
