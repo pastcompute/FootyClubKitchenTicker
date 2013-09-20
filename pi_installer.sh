@@ -82,6 +82,8 @@ if [ "$1" == "system-install" ] ; then
   sudo /etc/init.d/supervisor stop > /dev/null
   sudo /etc/init.d/supervisor start > /dev/null
 
+  sudo sed -e 's/^#xserver-command=X$/xserver-command=X -nocursor/g' -i /etc/lightdm/lightdm.conf
+
   sudo grep -q quiet /boot/cmdline.txt || sed '/quiet/ s/$/ quiet/' -i /boot/cmdline.txt
 
   [ -f /etc/xdg/lxsession/LXDE/autostart ] && sudo mv /etc/xdg/lxsession/LXDE/autostart /etc/xdg/lxsession/LXDE/autostart.bak
