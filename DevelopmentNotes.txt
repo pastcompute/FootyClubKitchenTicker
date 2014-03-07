@@ -1,77 +1,123 @@
-Whilst attempting to get it to work on Debian x86_64 I tweaked up the xloader shell script to be a bit more robust.
+Development on Debian
+=====================
 
-I needed to also do:
+Prerequisites
+-------------
 
-# needed for screenly:
+Various packages and Python packages are needed.
 
-apt-get install python-requests python-netifaces uzbl socat feh
-# apt-get remove python-bottle python-mako
+    apt-get install python-requests python-netifaces uzbl socat feh python-pip python-virtualenv
+    # Of course, additional prerequisites may be needed on a fresh Debian installation.
 
-# needed to get pythin package 'sh' for screenly
-# virtualenv also isolates different python working environments
+    # virtualenv isolates different python working environments
 
-apt-get install python-pip python-virtualenv
+    S Some Python prerequisites needed to be newer or were not in the Debian archive (for Squeeze, at least)
+    cd directory/above/screenly
+    mkdir mypy
+    virtualenv mypy
+    pip install -E mypy sh
+    pip install -E mypy hurry.filesize
+    pip install -E mypy uptime
+    pip install -E mypy bottle-haml
+    pip install -E mypy --upgrade bottle
+    pip install -E mypy --upgrade mako
 
-cd directory/above/screenly
-mkdir mypy
-virtualenv mypy
-pip install -E mypy sh
-pip install -E mypy hurry.filesize
-pip install -E mypy uptime
-pip install -E mypy bottle-haml
-pip install -E mypy --upgrade bottle
-pip install -E mypy --upgrade mako
+    # then to continue testing
+    source mypy/bin/activate
+    cd screenly-ose
 
-# then to continue testing
-source mypy/bin/activate
-cd screenly-ose
+Screenly Tweaks
+---------------
 
-mkdir ~/.screenly
-cp misc/screenly.conf ~/.screenly
-sed -e "s@debug_logging = False@debug_logging = True@" -i ~/.screenly/screenly.conf
+The following commands setup for my development environment.
+
+    mkdir ~/.screenly
+    cp misc/screenly.conf ~/.screenly
+    sed -e "s@debug_logging = False@debug_logging = True@" -i ~/.screenly/screenly.conf
+
+Whilst attempting to get it to work on Debian x86_64 I tweaked up the `misc/xloader.sh` shell script to be a bit more robust.
+This includes use of environment variables to modify default settings.
+For example, the delay at start:
   
-STARTUP_DELAY=1 misc/xloader.sh
+    STARTUP_DELAY=1 misc/xloader.sh
 
-Further, need to setup a web server to serve the splach screen, etc.
-This will get served locally by running server.py in another terminal.
+Screenly Operating Environment
+------------------------------
+
+Screenly provides a web server / web interface for management.  Execute for local access by running `server.py` in another terminal.
 
 
-The splash page is at http://<listen>:<port>/splash_page where
-listen:port is the value of the setting 'listen' in screenly.conf
-By default this gets set to 0.0.0.0:8080
-
-localhost:8080/splash_page will try and display splash screen from views/splash_page.haml
-
-The debian squeeze installation of python-bottle 0.8.4-1 has a bug, the member variable holding
-a valid list of filename extensions is spelled "extentions" but the version of bottle-haml installed from pip
-uses 'extensions', so I had to manually patch __init__.py in my python vierualenv to workaround this.
-
-Then the index page wouldnt parse properly.
-So I did `apt-get remove python-bottle` and instead install newer version using pip
-This fixed the typo as well *doh* so revert that change. 
-So I could have skipped the apt-get remove and used upgrade in the venv
-
-Except the newest bottle didnt help; and now the stack trace is on server.py stderr instead of the Web UI.
-Upgrading mako did the trick. Didnt need to add views/ to lookup argument after all.
+The splash page is at `http://<listen>:<port>/splash_page` where
+`listen:port` is the value of the setting `'listen'` in `screenly.conf`.
+By default this gets set to `0.0.0.0:8080`
 
 URLS:
-localhost:8080/splash_page
 
-localhost:8080/system_info
+* localhost:8080/splash_page
 
-localhost:8080/settings
+* localhost:8080/system_info
 
-localhost:8080/  aka index
+* localhost:8080/settings
 
-By default images get saved into $HOME/screenly_assets
+* localhost:8080/  (aka, index)
+
+By default, uploaded images get saved into `$HOME/screenly_assets`
+
+Other / Troubleshooting
+=======================
+
+Github
+------
+
+
+How to force repair branch to github; this method can be used to recover from accidentally committing wrong branch, etc. Obviously only do this on a personal repository!
+
+    git push -f origin <some-hash>:master
+
+e.g:
+
+    git push -f origin f2e58ecacdef8856e54181c9b6c391a6768aaeeb:master
+
+Various Python Related Issues
+-----------------------------
+
+The Debian Squeeze installation of `python-bottle 0.8.4-1` has a bug, the member variable holding
+a valid list of filename extensions is spelled "extentions" but the version of bottle-haml installed from pip
+uses 'extensions', so I had to manually patch the Bottle `__init__.py` in my Python virtualenv to workaround this.
+
+Then the index page wouldnt parse properly.
+So I did `apt-get remove python-bottle` and instead installed a newer version using pip. This fixed the typo as well, so I revert my manual change. 
+It turns out then I could have skipped the apt-get remove and used upgrade in the virtualenv.
+
+The newest bottle didnt help; and now the stack trace occurs in `server.py` stderr instead of the Web UI.
+Upgrading mako did the trick. Didnt need to add views/ to lookup argument after all.
+
+
+Python Debugging
+-----------------
+
+To enable stack traces in the web server:
+
+```python
+    from bottle import debug
+    then debug(True) just before run(....)
+```
+
+Socat Issues
+------------
+
+Screenly uses socat to communicate with the Webkit-based lightweight browser `uzbl`, which is used for HTML displays, etc.
+
+Error encountered with socat: 
+    socat[3207] E connect(3, AF=1 "/tmp/uzbl_socket_3179", 23): No such file or directory
+
+It turns out that the Unix socket used to control `uzbl` is named differently from that expected by default, so I added a fallback to `server.py` for that.
+
+Blather
+-------
 
 Not showing.  Turned off splash. 
 
-Problems with socat: socat[3207] E connect(3, AF=1 "/tmp/uzbl_socket_3179", 23): No such file or directory
---> the socket to control uzbl is named differently so I added a fallback for that
-
 By lucky fluke, this is firing up on my secondary monitor, awesome!
 
-Note - to enable stack traces in the web server, 
-from bottle import debug
-then debug(True) just before run(....)
+

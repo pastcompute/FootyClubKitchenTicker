@@ -1,11 +1,14 @@
-Raspberry Pi implementation.
+Raspberry Pi implementation of a large screen media display
+===========================================================
 
 1. Photo Memorabilia / Thank Sponsors / Advertising
+------------------------------------------------
 
 Prototyped already using screenly.
 LCD TV will display seqntially or randomly a series of photos, advertising pages, and thank the sponsor messages.
 
 2. Kitchen Menu
+---------------
 
 Our awesome cook wants to show the menu on Thursday/Saturday teas :-)
 
@@ -14,42 +17,51 @@ We could have this as a mode, where the menu shows repeatedly, in between 1-N se
 This leads me to think we could actually have multiple sets of #1 above saved, to choose between, as well.
 
 3. Immediate Upload Mode
+------------------------
 
 Allow committee to uload photos during already play with rules on when to display
 
-
 4. Announcement Mode
+--------------------
 
 We could allow committee to type in a message to be displayed.
 Have rules on when to show on and how long, etc.
 Perhaps this could be on the (a) ticker instead.
-e.g. game day half time scores, other informaiton.
+e.g. game day half time scores, other information.
 
 4a. Full Scren Announce mode
 4b. Ticker announce mode
 
-5. Kicthen tea announcements - allow order taker to flash up names, then remove them when they take their dinner
+5. Kitchen tea announcements
+----------------------------
+Allow order taker to flash up names, then remove them when they take their dinner
 This will complement existing microphone use...
 
 6. Shut Up announcements
+------------------------
 
-When the Pres has the floor, we can have a static 'Please Shut up'
+When the President has the floor, we can have a static 'Please Shut up'
 Could have a remote button to press which will flash it :-)
 
 7. Slave Mode
+-------------
 
 Dont want to have to upload to systems.
 So one is master (the one in the close-offable area)
 The one in the bar is a slave.
 
-Design notes: master will have router, slave just a wifi dongle
-Master will run webserver which slave will access for content
-Master will have management webserver for uploading
-Slave will need a way to respond to mode changes
-Consider independent (dual) mode configurationableness...
+Design notes 
+------------
+
+* Master will have router, slave just a wifi dongle
+* Master will run webserver which slave will access for content
+* Master will have management webserver for uploading
+* Slave will need a way to respond to mode changes
+* Consider independent (dual) mode "configurationableness..."
 
 
-10. Guidance
+Guidance
+--------
 
 The User Interface for uploading after mode selection needs to be DEAD SIMPLE!!!!!
 
@@ -59,12 +71,10 @@ for sharing so laptop can be DHCP server.
 Final design will be cable tied to a micro-wireless router so we can just remotely do it.
 System will be behind TV making routine physical access dificult
 
+Design Concept
+==============
 
-
-
-20. Design Concept
-
-First System.
+First System
 ------------
 
 Raspberry Pi running Wheezbian
@@ -87,8 +97,8 @@ Augment with a ticker, because screenly just shows photos videos and URLs
 Ticker may be a screenly mode, but perhaps easier to use spearately
 Need to mod screenly to show a space for the ticker
 
-Second System.
-------------
+Second System
+-------------
 
 Raspberry Pi running Wheezbian
 HDMI cable
@@ -121,18 +131,21 @@ Spend $100 and put a 12mo prepaid dongle for remote management and status
 Initial Shopping List
 ---------------------
 
-2x Raspberry Pi B 512M - do we get a spare?
+Element14:
+2x Raspberry Pi B 512M + case - do we get a spare?
+3x micro USB power cable (1 spare)
+2x 0.5m ethernet cable (1 spare)
+2x 0.5m HDMI cable
+1x 5m HDMI cable for STW purposes
+
 2x heatsink
-2x micro USB power cable
 2x double adaptor+2xUSB-power sufficient to power the Pi - like the Jackson ones at KMart
 3x 8G SDcard  (1 spare)
 2x micro bt dongle
 1x bt keyboard $22 @ woolies (do we need a spare?)
 1x USB hub (with micro usb power option) + cable for testing and STW
-2x 0.5m ethernet cable (1 spare)
 1x 5m ethernet cable for STW purposes
-3x 0.5m HDMI cable (1 spare)
-1x 5m HDMI cable for STW purposes
+
 2x compatible Wifi dongle (1 spare)
 1x DIR505
 
@@ -144,8 +157,4 @@ Screenly
 uzbl   <-- this is a webkit based browser
 socat  <-- used for comms with uzbl
 feh    <-- image viewer
-
-
-
-
 

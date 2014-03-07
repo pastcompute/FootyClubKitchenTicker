@@ -1,0 +1,97 @@
+Build Instructions for tweaked OpenWRT on DIR-505
+=================================================
+
+Out of the box the DIR-505 firmware is a bit annoying, no obvious way to bridge the ethernet port and wifi onto the same subnet, it is geared up to be an Internet router.
+
+So use OpenWrt to resolve this.
+
+DIR-505 is apparently supported in Attitude Adjustment: http://wiki.openwrt.org/toh/d-link/dir-505 and definitely in the current trunk.
+
+We need to build from git trunk sources.  I also like to make my OpenWRT image highly specific as possible, but to start with make it close to the standard OpenWRT to sanity check.
+
+    mkdir -p $HOME/develop/club/openwrt/DOWNLOAD
+    git clone git://git.openwrt.org/openwrt.git 
+    cd openwrt
+
+    scripts/env new club
+    cat > .config <<EOF
+    CONFIG_TARGET_ar71xx=y
+    CONFIG_TARGET_ar71xx_generic=y
+    CONFIG_TARGET_ar71xx_generic_DIR505A1=y
+    CONFIG_DEVEL=y
+    CONFIG_DOWNLOAD_FOLDER="$HOME/develop/club/DOWNLOAD.openwrt"
+    CONFIG_BUILD_LOG=y
+    CONFIG_NEED_TOOLCHAIN=y
+    EOF
+    scripts/env save
+
+    # Note, without CONFIG_DEVEL the above changes dont stick properly
+
+    cp feeds.conf.default feeds.conf
+
+    scripts/feeds update -a
+    scripts/env revert
+
+    scripts/feeds install \
+    coreutils-dd coreutils-od gzip tar sed patch \
+    less vim screen procps-ps wget wavemon \
+    bridge ethtool mii-tool socat rsync tcpdump lsof nmap mtd-utils ntpdate 
+    scripts/feeds list
+
+
+    make defconfig
+    make prereq
+    make -j4
+
+This produces `bin/openwrt-ar71xx-generic-dir-505-a1-squashfs-factory.bin`
+
+Flash procedure
+---------------
+
+Safest way to flash:
+
+1. Power off
+2. Hold in reset pin (need a jewellers screwdriver or pin, etc)
+3. Power on.  Wait for red LED to flash
+4. Set PC ethernet to 192.168.0.2
+5. Connect ethernet to DIR-505
+6. Browse to 192.168.0.1.  Note - in the past with D-Link recovery I had trouble with Firefox and Chrome, so for now I do this from Windows with IE.
+7. Upload the factory image.
+8. When completed, wait 30 seconds then power cycle. Note, NOT successful until LED turns green. Ensure power stays off until LED turns off
+9. On reboot, LED is red for about 30 seconds, then green, if DLink. OpenWRT, will flash green.
+10. 192.168.1.1 is default eth address, can telnet in now.
+
+Note, eth0 is Wifi, eth1 is Ethernet.
+
+Additional Packages and Customisation
+-------------------------------------
+
+Rebuild with more packages; to expedite setup, I added web interface, and WPA, as modules for now.
+
+    scripts/feeds install luci-mod-admin-mini luci
+    make menuconfig  
+    # <-- select luci, wpa-supplicant wireless-tools wpa-cli usbutils - as built in not module, to facilitiate new builds.
+    # <-- select tcpdump as module (diagnostic tools)
+    # <-- select Video support, phillips USB webcam, gscpa-core and all the gspca usb webcams as modules
+    # <-- remove ppp
+    # <-- global build, disable ipv6, remove net: 6relay, odhcp6c, netfilter-ip6 etc until no ip6 related are selected
+    make -j4
+
+Upgrade - full reflash:
+-----------------------
+
+The following procedure bricked the router, so I reflashed it using the reset procedure above. Unsure why.
+
+
+Copy sysupgrade image file to web server.
+A good solution is to symlink the openwrt parent directory into ~/public_html 
+Then telnet into device.
+
+Here, 192.168.1.2 is the development machine connected to the router.
+
+sysupgrade -n http://192.168.1.2/~$USER/club/openwrt/bin/ar71xx/openwrt-ar71xx-generic-dir-505-a1-squashfs-sysupgrade.bin
+
+Note, sysupgrade direct pulls from web to flash.
+If you have issues with power supply, may be safer to copy to /tmp and flash from there.
+
+
