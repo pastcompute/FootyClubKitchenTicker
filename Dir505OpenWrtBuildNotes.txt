@@ -3,23 +3,30 @@ Build Instructions for tweaked OpenWRT on DIR-505
 
 Out of the box the DIR-505 firmware is a bit annoying, no obvious way to bridge the ethernet port and wifi onto the same subnet, it is geared up to be an Internet router.
 
-So use OpenWrt to resolve this.
+So we use OpenWrt to resolve this, and have a bit more flexibility.
 
 DIR-505 is apparently supported in Attitude Adjustment: http://wiki.openwrt.org/toh/d-link/dir-505 and definitely in the current trunk.
 
 We need to build from git trunk sources.  I also like to make my OpenWRT image highly specific as possible, but to start with make it close to the standard OpenWRT to sanity check.
 
-    mkdir -p $HOME/develop/$PROJECT/openwrt/DOWNLOAD
-    git clone git://git.openwrt.org/openwrt.git 
-    cd openwrt
+This procedure also somewhat documents how we got there, so may have redundant steps.
 
-    scripts/env new club
+    BUILDROOT=$HOME/develop/$PROJECT/openwrt   # <-- or whever you have it
+    DOWNLOADS=$HOME/develop/$PROJECT/DOWNLOAD.openwrt
+    CLUB=club
+
+    cd $HOME/develop/$PROJECT
+    mkdir -p $DOWNLOADS
+    git clone git://git.openwrt.org/openwrt.git $BUILDROOT
+    cd $BUILDROOT
+
+    scripts/env new $CLUB
     cat > .config <<EOF
     CONFIG_TARGET_ar71xx=y
     CONFIG_TARGET_ar71xx_generic=y
     CONFIG_TARGET_ar71xx_generic_DIR505A1=y
     CONFIG_DEVEL=y
-    CONFIG_DOWNLOAD_FOLDER="$HOME/develop/$PROJECT/DOWNLOAD.openwrt"
+    CONFIG_DOWNLOAD_FOLDER="$DOWNLOADS"
     CONFIG_BUILD_LOG=y
     CONFIG_NEED_TOOLCHAIN=y
     EOF
@@ -30,20 +37,62 @@ We need to build from git trunk sources.  I also like to make my OpenWRT image h
     cp feeds.conf.default feeds.conf
 
     scripts/feeds update -a
-    scripts/env revert
 
     scripts/feeds install \
-    coreutils-dd coreutils-od gzip tar sed patch \
-    less vim screen procps-ps wget wavemon \
-    bridge ethtool mii-tool socat rsync tcpdump lsof nmap mtd-utils ntpdate 
-    scripts/feeds list
-
+      coreutils-dd coreutils-od gzip tar sed patch \
+      less vim screen procps-ps wget wavemon \
+      bridge ethtool mii-tool socat rsync tcpdump lsof nmap mtd-utils ntpdate \
+      luci-mod-admin-mini luci
 
     make defconfig
+    scripts/env save
+
     make prereq
+    make menuconfig  
+    # <-- select luci, wpad-mini usbutils - as built in not module, to facilitiate new builds.
+    # <-- select tcpdump as module (diagnostic tools)
+    # <-- select Video support, phillips USB webcam, gscpa-core and all the gspca usb webcams as modules
+    # <-- remove ppp
+    # <-- global build, disable ipv6, remove net: 6relay, odhcp6c, netfilter-ip6 etc until no ip6 related are selected
+    # <-- modules for usb-storage, i2c
+    # <-- select built in miniupnpd, etc. and other tools
+    # <-- for final list, see .config
+    scripts/env save
+
     make -j4
 
 This produces `bin/openwrt-ar71xx-generic-dir-505-a1-squashfs-factory.bin`
+
+
+Backing up the env git repository
+---------------------------------
+
+When `scripts/env save` is run, it updates a copy of changed .config and files/ in the env/ directory, tracked in a local git repository.
+
+Back this up externally from the build root as follows:
+
+    (cd .. ; mkdir openwrt.env ; cd openwrt.env ; git init )
+    cd env
+    git remote add backup file:///$HOME/develop/$PROJECT/openwrt.env
+    git push backup
+
+Reusing configuration from env on a fresh working copy
+------------------------------------------------------
+
+    git clone git://git.openwrt.org/openwrt.git # (etc)
+    cd openwrt
+    
+Note, CONFIG_DOWNLOAD_FOLDER is a fixed path, so if using a different build root or download location, remember to update the .config accordingly.
+
+    scripts/env new wc
+    cd env
+    git remote add backup file:///$HOME/develop/$PROJECT/openwrt.env
+    git fetch backup
+    git branch --track $CLUB backup/$CLUB
+    cd ..
+    scripts/env switch $CLUB
+
+This will require files/etc/banner to be recreated, if no other files/ exist.
 
 Flash procedure
 ---------------
@@ -63,19 +112,33 @@ Safest way to flash:
 
 Note, eth0 is Wifi, eth1 is Ethernet.
 
-Additional Packages and Customisation
--------------------------------------
+Modification of various image defaults
+======================================
 
-Rebuild with more packages; to expedite setup, I added web interface, and WPA, as modules for now.
+One-off customisations
+----------------------
 
-    scripts/feeds install luci-mod-admin-mini luci
-    make menuconfig  
-    # <-- select luci, wpad-mini usbutils - as built in not module, to facilitiate new builds.
-    # <-- select tcpdump as module (diagnostic tools)
-    # <-- select Video support, phillips USB webcam, gscpa-core and all the gspca usb webcams as modules
-    # <-- remove ppp
-    # <-- global build, disable ipv6, remove net: 6relay, odhcp6c, netfilter-ip6 etc until no ip6 related are selected
+    make package/compile      # <-- optional; ensure packages/ has latest sources
+    
+    # Once off, make our banner.
+    # (Start with package/base-files/files/etc/banner for OpenWRT info)
+    # Put customer private information into ../private.banner
+    mkdir -p files/etc
+    cd files/etc
+    test -e ../private.banner && cp ../private.banner files/etc/banner
+
+    # Dont save private banner to github (!)    
+    ( cd env ; egrep -q files/etc/banner .gitignore || { echo files/etc/banner >> .gitignore ; git commit -m "Update gitignore" .gitignore ; })
+
+
     make -j4
+
+System customisations
+---------------------
+
+
+Post router installation
+========================
 
 Local package repository
 ------------------------
@@ -93,26 +156,28 @@ Then:
     /etc/init.d/uhttpd enable
     /etc/init.d/uhttpd start
 
+Network Configuration
+---------------------
+
 Enable the wifi:
 
     uci set wireless.radio0=wifi-device
     uci set wireless.radio0.channel=6
     uci set wireless.radio0.country=AU
     uci set wireless.radio0.hwmode=11g
+    uci set wireless.radio0.distance=7
+    uci set wireless.radio0.txpower=20
     uci set wireless.@wifi-device[0]=wifi-device
+    uci set wireless.@wifi-device[0].device=radio0
     uci set wireless.@wifi-device[0].disabled=0
     uci set wireless.@wifi-device[0].network=lan 
     uci set wireless.@wifi-device[0].mode=ap
-    uci set wireless.@wifi-device[0].ssid=longies
+    uci set wireless.@wifi-device[0].wmm=0
     uci set wireless.@wifi-device[0].encryption=psk2
-    uci set "wireless.@wifi-device[0].key=T!gersRulez"
+    uci set wireless.@wifi-device[0].ssid=club
+    uci set 'wireless.@wifi-device[0].key=ChangeMe'
     uci commit wireless; wifi
     
-From the web interface:
-
-* Network - first, remove wlan0 from the bridge, so other changes can be made to wireless settings
-* Wireless - change radio0 to AP, enable radio0; it appears you need to switch to Ad-Hoc then AP, otherwise it stays stuck in Client (maybe a luci bug)
-
 Other Notes
 ===========
 
@@ -120,6 +185,7 @@ Wireless encryption
 -------------------
 
 uci seems to want hostapd despite having installed wpa_supplicant ...
+
 
 
 Upgrade - full reflash:
